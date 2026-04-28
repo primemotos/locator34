@@ -1,14 +1,13 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ================= CONFIGURAÇÕES =================
-    // Origem: Recanto das Emas - DF
+// Origem: Recanto das Emas - DF
 const ORIGEM = [-15.9120, -48.0610];
 
-// Destino: João Pessoa - PB
-const DESTINO = [-7.1195, -34.8450];
-
-    // Tempo total de viagem (72 horas)
-const DURACAO_VIAGEM = 72 * 60 * 60 * 1000;
+// Destino: Rio de Janeiro - RJ
+const DESTINO = [-22.9068, -43.1729];
+   // Tempo total de viagem (84 horas)
+const DURACAO_VIAGEM = 84 * 60 * 60 * 1000;
     const STORAGE_START_KEY = 'inicio_viagem';
 
     let map;
