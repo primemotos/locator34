@@ -1,14 +1,15 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ================= CONFIGURAÇÕES =================
-    // Origem: Poços de Caldas - MG (apenas referência)
-    const ORIGEM = [-21.7878, -46.5613];
+    // Origem: Recanto das Emas - DF
+const ORIGEM = [-15.9120, -48.0610];
 
-    // Destino: Suzano - SP (apenas referência)
-    const DESTINO = [-23.5425, -46.3117];
+// Destino: João Pessoa - PB
+const DESTINO = [-7.1195, -34.8450];
 
-    // 📍 PRF – Centralina - MG
-    const PARADA_PRF = [-18.5858, -49.2016];
+    // Tempo total de viagem (72 horas)
+const DURACAO_VIAGEM = 72 * 60 * 60 * 1000;
+    const STORAGE_START_KEY = 'inicio_viagem';
 
     let map;
     let fullRoute = [];
@@ -54,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // ================= BUSCA DA ROTA (APENAS VISUAL) =================
+    // ================= BUSCA NA API =================
     async function buscarRotaNaAPI() {
         const ORS_TOKEN = "eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImQzY2QyNmU1ZWNlOTRjZDJhYTBiZDE0NGU5YmFlYzlhIiwiaCI6Im11cm11cjY0In0=";
 
@@ -70,45 +71,76 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ================= MAPA =================
     function iniciarMapa() {
+        if (map) return;
 
-        map = L.map('map', { zoomControl: false }).setView(PARADA_PRF, 12);
+        map = L.map('map', { zoomControl: false }).setView(ORIGEM, 9);
 
         L.tileLayer(
             'https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png'
         ).addTo(map);
 
-        // Rota apenas ilustrativa
         polyline = L.polyline(fullRoute, {
             color: '#2563eb',
             weight: 5,
             dashArray: '10,10',
-            opacity: 0.4
+            opacity: 0.8
         }).addTo(map);
 
-        const motoIcon = L.divIcon({
+        const truckStatusIcon = L.divIcon({
             className: 'custom-marker',
-            html: `<div style="font-size:32px;">🏍️</div>`,
+            html: `<div style="font-size:32px;">🚛</div>`,
             iconSize: [30, 30],
             iconAnchor: [15, 30]
         });
 
-        // 🚨 MOTO JÁ RETIDA AO ABRIR
-        retainedMarker = L.marker(PARADA_PRF, {
-            icon: motoIcon,
+        retainedMarker = L.marker(ORIGEM, {
+            icon: truckStatusIcon,
             zIndexOffset: 1000
         }).addTo(map);
 
-        atualizarStatusPRF();
+        atualizarStatus();
+        animarCaminhao();
+    }
+
+    // ================= ANIMAÇÃO =================
+    function animarCaminhao() {
+
+        let inicio = localStorage.getItem(STORAGE_START_KEY);
+
+        // cria apenas na primeira vez
+        if (!inicio) {
+            inicio = Date.now();
+            localStorage.setItem(STORAGE_START_KEY, inicio);
+        } else {
+            inicio = parseInt(inicio);
+        }
+
+        function mover() {
+            const agora = Date.now();
+            const progresso = Math.min((agora - inicio) / DURACAO_VIAGEM, 1);
+
+            const index = Math.floor(progresso * (fullRoute.length - 1));
+            const posicao = fullRoute[index];
+
+            if (retainedMarker && posicao) {
+                retainedMarker.setLatLng(posicao);
+            }
+
+            if (progresso < 1) {
+                requestAnimationFrame(mover);
+            }
+        }
+
+        mover();
     }
 
     // ================= STATUS =================
-    function atualizarStatusPRF() {
+    function atualizarStatus() {
         const badge = document.getElementById('time-badge');
         if (badge) {
-            badge.innerText = "RETIDO PELA PRF – FALTA DE NOTA FISCAL (CENTRALINA - MG)";
-            badge.style.background = "#dc2626";
-            badge.style.color = "#ffffff";
+            badge.innerText = "EM TRÂNSITO";
+            badge.style.background = "#22c55e";
+            badge.style.color = "white";
         }
     }
-
 });
