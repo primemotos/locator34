@@ -100,7 +100,6 @@ const STORAGE_START_KEY = 'inicio_viagem';
         }).addTo(map);
 
         atualizarStatus();
-        animarCaminhao();
     }
 
     // ================= ANIMAÇÃO =================
