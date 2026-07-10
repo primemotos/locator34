@@ -1,14 +1,16 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ================= CONFIGURAÇÕES =================
-// Origem: Recanto das Emas - DF
-const ORIGEM = [-15.9120, -48.0610];
+// Origem: Brasília - DF
+const ORIGEM = [-15.793889, -47.882778];
 
-// Destino: Rio de Janeiro - RJ
-const DESTINO = [-22.9068, -43.1729];
-   // Tempo total de viagem (84 horas)
+// Destino: Ipatinga - MG (CEP 35200-000)
+const DESTINO = [-19.4706, -42.5476];
+
+// Tempo total de viagem (84 horas)
 const DURACAO_VIAGEM = 84 * 60 * 60 * 1000;
-    const STORAGE_START_KEY = 'inicio_viagem';
+
+const STORAGE_START_KEY = 'inicio_viagem';
 
     let map;
     let fullRoute = [];
