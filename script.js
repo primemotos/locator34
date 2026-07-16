@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
 
     // ================= CONFIGURAÇÕES =================
-// Origem: Brasília - DF
-const ORIGEM = [-15.793889, -47.882778];
 
+// Origem: Cristalina - GO
+const ORIGEM = [-16.7676, -47.6131];
 // Destino: Ipatinga - MG (CEP 35200-000)
 const DESTINO = [-19.4706, -42.5476];
 
