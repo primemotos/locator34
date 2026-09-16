@@ -3,42 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
     <title>Rastreamento em Tempo Real</title>
+
     <link rel="icon" type="image/png" href="logo.png">
-    
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+    <!-- Leaflet -->
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <!-- Seu CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
+    <!-- ================= LOGIN ================= -->
+
     <div id="login-overlay" class="login-overlay">
+
         <div class="login-box">
-            <img src="logo.png" alt="Wiu Logo" class="logo">
+
+            <img
+                src="logo.png"
+                alt="Wiu Logo"
+                class="logo"
+            >
+
             <h2>Wiu Rastreamento Seguro</h2>
-            <p>Insira o código de rastreio para visualizar a carga.</p>
-            
-            <input type="text" id="access-code" placeholder="Código de Acesso" maxlength="8">
-            
-            <button id="btn-login">Rastrear Carga</button>
-            
-            <p id="error-msg" style="color: red; display: none; margin-top: 10px;">Código inválido.</p>
+
+            <p>
+                Insira o código de rastreio para visualizar a carga.
+            </p>
+
+            <input
+                type="text"
+                id="access-code"
+                placeholder="Código de Acesso"
+                maxlength="8"
+            >
+
+            <button id="btn-login">
+                Rastrear Carga
+            </button>
+
+            <p
+                id="error-msg"
+                style="
+                    color: red;
+                    display: none;
+                    margin-top: 10px;
+                "
+            >
+                Código inválido.
+            </p>
+
         </div>
+
     </div>
+
+
+    <!-- ================= MAPA ================= -->
 
     <div id="map"></div>
 
-    <div class="delivery-info" id="info-card" style="display: none;"> 
-        <div class="driver-avatar"></div>
-        <div class="info-text">
-            <h3>Transporte Rodoviário</h3>
-            <span class="status-badge" id="time-badge"> 1 DIAS</span>
-            <h5> EM ROTA</h5>
-            <p>BRASILIA</p>
-            <p>MINAS GERAIS</p>
+
+    <!-- ================= INFORMAÇÕES ================= -->
+
+    <div
+        class="delivery-info"
+        id="info-card"
+        style="display: none;"
+    >
+
+        <div class="driver-avatar">
+            🚛
         </div>
+
+        <div class="info-text">
+
+            <h3>
+                Transporte Rodoviário
+            </h3>
+
+            <span
+                class="status-badge"
+                id="time-badge"
+            >
+                EM TRÂNSITO
+            </span>
+
+            <h5 id="route-status">
+                EM ROTA
+            </h5>
+
+            <p id="origem">
+                PRIMAVERA DO LESTE - MT
+            </p>
+
+            <p id="destino">
+                COCALINHO - MT
+            </p>
+
+        </div>
+
     </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- ================= LEAFLET ================= -->
+
+    <script
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+    </script>
+
+    <!-- Seu JavaScript -->
     <script src="script.js"></script>
+
 </body>
 </html>
