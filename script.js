@@ -1,225 +1,306 @@
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener("DOMContentLoaded", () => {
 
-    // =====================================================
-    // CONFIGURAÇÕES DA VIAGEM
-    // =====================================================
+    // =========================================
+    // CONFIGURAÇÕES DO PROTÓTIPO
+    // =========================================
 
-    // SAÍDA: Primavera do Leste - MT
-    const ORIGEM = [-15.5561, -54.2963];
-
-    // CHEGADA: Cocalinho - MT
-    const DESTINO = [-14.1237, -50.9983];
-
-    // Tempo total da viagem
-    // 8 horas
-    const DURACAO_VIAGEM = 8 * 60 * 60 * 1000;
-
-    // Nova chave para não utilizar o progresso da viagem antiga
-    const STORAGE_START_KEY = 'inicio_viagem_primavera_cocalinho';
-
-    // Código de acesso
-    const CODIGO_ACESSO = "39450";
-
-    let map;
-    let fullRoute = [];
-    let retainedMarker;
-    let polyline;
+    // Código aceito na demonstração
+    const CODIGO_DEMO = "PRIME2026";
 
 
-    // =====================================================
-    // INICIALIZAÇÃO
-    // =====================================================
-
-    document
-        .getElementById('btn-login')
-        ?.addEventListener('click', verificarCodigo);
-
-    verificarSessaoSalva();
+    // Primavera do Leste - MT
+    const ORIGEM = [
+        -15.5561,
+        -54.2963
+    ];
 
 
-    // =====================================================
-    // LOGIN
-    // =====================================================
+    // Cocalinho - MT
+    const DESTINO = [
+        -14.1237,
+        -50.9983
+    ];
 
-    function verificarCodigo() {
 
-        const inputElement =
-            document.getElementById('access-code');
+    // =========================================
+    // DURAÇÃO DA VIAGEM
+    //
+    // 8 HORAS
+    // =========================================
 
-        if (!inputElement) return;
+    const DURACAO_SIMULACAO =
+        8 *
+        60 *
+        60 *
+        1000;
 
-        const code =
-            inputElement.value.trim();
 
-        if (code !== CODIGO_ACESSO) {
+    // =========================================
+    // VARIÁVEIS
+    // =========================================
 
-            alert(
-                "Código de rastreio inválido. Tente novamente."
-            );
+    let map = null;
 
-            inputElement.value = "";
+    let routeCoordinates = [];
 
-            localStorage.removeItem('codigoAtivo');
+    let routeLine = null;
 
-            return;
-        }
+    let truckMarker = null;
 
-        localStorage.setItem(
-            'codigoAtivo',
-            code
+    let animationFrame = null;
+
+    let startTime = null;
+
+
+    // =========================================
+    // ELEMENTOS HTML
+    // =========================================
+
+    const loginScreen =
+        document.getElementById(
+            "login-screen"
         );
 
-        carregarInterface();
-    }
+
+    const trackingScreen =
+        document.getElementById(
+            "tracking-screen"
+        );
 
 
-    // =====================================================
-    // VERIFICAR SESSÃO SALVA
-    // =====================================================
-
-    function verificarSessaoSalva() {
-
-        const codigo =
-            localStorage.getItem('codigoAtivo');
-
-        if (codigo === CODIGO_ACESSO) {
-            carregarInterface();
-        }
-    }
+    const form =
+        document.getElementById(
+            "tracking-form"
+        );
 
 
-    // =====================================================
-    // CARREGAR INTERFACE
-    // =====================================================
+    const trackingCode =
+        document.getElementById(
+            "tracking-code"
+        );
 
-    async function carregarInterface() {
 
-        const overlay =
-            document.getElementById('login-overlay');
+    const errorMessage =
+        document.getElementById(
+            "error-message"
+        );
 
-        const btnLogin =
-            document.getElementById('btn-login');
 
-        if (btnLogin) {
-            btnLogin.innerText = "Consultando...";
-            btnLogin.disabled = true;
-        }
+    const trackingButton =
+        document.getElementById(
+            "tracking-button"
+        );
 
-        try {
 
-            await buscarRotaNaAPI();
+    const displayCode =
+        document.getElementById(
+            "display-code"
+        );
 
-            if (overlay) {
-                overlay.style.display = 'none';
+
+    const newTracking =
+        document.getElementById(
+            "new-tracking"
+        );
+
+
+    const progressBar =
+        document.getElementById(
+            "progress-bar"
+        );
+
+
+    const progressText =
+        document.getElementById(
+            "progress-text"
+        );
+
+
+    const elapsed =
+        document.getElementById(
+            "elapsed"
+        );
+
+
+    const distance =
+        document.getElementById(
+            "distance"
+        );
+
+
+    const statusBadge =
+        document.getElementById(
+            "status-badge"
+        );
+
+
+    const lastUpdate =
+        document.getElementById(
+            "last-update"
+        );
+
+
+    // =========================================
+    // FORMULÁRIO DE RASTREIO
+    // =========================================
+
+    form.addEventListener(
+        "submit",
+        async function (event) {
+
+            event.preventDefault();
+
+
+            const codigo =
+                trackingCode
+                    .value
+                    .trim()
+                    .toUpperCase();
+
+
+            // Limpar erro
+
+            errorMessage.textContent = "";
+
+
+            // Campo vazio
+
+            if (!codigo) {
+
+                errorMessage.textContent =
+                    "Digite o código de rastreio.";
+
+                return;
             }
 
-            const infoCard =
-                document.getElementById('info-card');
 
-            if (infoCard) {
-                infoCard.style.display = 'flex';
+            // Código incorreto
+
+            if (codigo !== CODIGO_DEMO) {
+
+                errorMessage.textContent =
+                    "Código de rastreio não encontrado.";
+
+                trackingCode.focus();
+
+                return;
             }
 
-            // Atualiza informações do cartão
-            atualizarInformacoes();
 
-            // Inicia mapa
-            iniciarMapa();
+            // Botão carregando
 
-        } catch (erro) {
+            trackingButton.disabled =
+                true;
 
-            console.error(
-                "Erro ao carregar viagem:",
-                erro
-            );
+            trackingButton.textContent =
+                "Carregando rota...";
 
-            alert(
-                "Não foi possível carregar a rota.\n\n" +
-                "Verifique a conexão ou a configuração da API de rotas."
-            );
 
-            if (btnLogin) {
-                btnLogin.innerText = "Consultar";
-                btnLogin.disabled = false;
+            try {
+
+                await iniciarRastreamento(
+                    codigo
+                );
+
+
+            } catch (erro) {
+
+                console.error(erro);
+
+                errorMessage.textContent =
+                    "Não foi possível carregar a rota.";
+
+                trackingButton.disabled =
+                    false;
+
+                trackingButton.textContent =
+                    "Rastrear carga";
+
             }
+
         }
+    );
+
+
+    // =========================================
+    // INICIAR RASTREAMENTO
+    // =========================================
+
+    async function iniciarRastreamento(
+        codigo
+    ) {
+
+        // Mostrar código
+
+        displayCode.textContent =
+            codigo;
+
+
+        // Esconder login
+
+        loginScreen.classList.add(
+            "hidden"
+        );
+
+
+        // Mostrar rastreamento
+
+        trackingScreen.classList.remove(
+            "hidden"
+        );
+
+
+        // Buscar rota
+
+        await buscarRota();
+
+
+        // Criar mapa
+
+        criarMapa();
+
+
+        // INICIAR VIAGEM AGORA
+
+        startTime =
+            performance.now();
+
+
+        // Iniciar animação
+
+        animarCaminhao(
+            startTime
+        );
+
     }
 
 
-    // =====================================================
-    // ATUALIZAR INFORMAÇÕES DA VIAGEM
-    // =====================================================
-
-    function atualizarInformacoes() {
-
-        /*
-         * Caso seu HTML possua esses IDs,
-         * eles serão atualizados automaticamente.
-         */
-
-        const origemElement =
-            document.getElementById('origem');
-
-        const destinoElement =
-            document.getElementById('destino');
-
-        const cidadeOrigemElement =
-            document.getElementById('cidade-origem');
-
-        const cidadeDestinoElement =
-            document.getElementById('cidade-destino');
-
-        if (origemElement) {
-            origemElement.innerText =
-                "PRIMAVERA DO LESTE";
-        }
-
-        if (destinoElement) {
-            destinoElement.innerText =
-                "COCALINHO";
-        }
-
-        if (cidadeOrigemElement) {
-            cidadeOrigemElement.innerText =
-                "PRIMAVERA DO LESTE - MT";
-        }
-
-        if (cidadeDestinoElement) {
-            cidadeDestinoElement.innerText =
-                "COCALINHO - MT";
-        }
-    }
-
-
-    // =====================================================
+    // =========================================
     // BUSCAR ROTA
-    // =====================================================
+    // =========================================
 
-    async function buscarRotaNaAPI() {
+    async function buscarRota() {
 
         /*
-         * IMPORTANTE:
-         * Coloque sua chave do OpenRouteService abaixo.
+         * A rota é calculada utilizando OSRM.
          *
-         * Não publique sua chave em repositório público.
+         * O caminhão será movimentado sobre os
+         * pontos da rota retornada.
          */
-
-        const ORS_TOKEN =
-            "COLOQUE_SUA_CHAVE_ORS_AQUI";
 
 
         const start =
             `${ORIGEM[1]},${ORIGEM[0]}`;
+
 
         const end =
             `${DESTINO[1]},${DESTINO[0]}`;
 
 
         const url =
-            `https://api.openrouteservice.org/v2/directions/driving-car` +
-            `?api_key=${ORS_TOKEN}` +
-            `&start=${start}` +
-            `&end=${end}`;
+            "https://router.project-osrm.org/route/v1/driving/" +
+            `${start};${end}` +
+            "?overview=full&geometries=geojson";
 
 
         const response =
@@ -228,17 +309,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (!response.ok) {
 
-            const erro =
-                await response.text();
-
-            console.error(
-                "Erro da OpenRouteService:",
-                erro
-            );
-
             throw new Error(
-                "Erro ao consultar a rota."
+                "Erro ao carregar rota."
             );
+
         }
 
 
@@ -247,350 +321,634 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
         if (
-            !data.features ||
-            !data.features.length
+            data.code !== "Ok" ||
+            !data.routes ||
+            !data.routes.length
         ) {
 
             throw new Error(
-                "Nenhuma rota encontrada."
+                "Rota não encontrada."
             );
+
         }
 
 
-        fullRoute =
-            data.features[0]
-                .geometry
-                .coordinates
-                .map(c => [
-                    c[1],
-                    c[0]
-                ]);
+        const rota =
+            data.routes[0];
 
 
-        console.log(
-            "Rota carregada:",
-            fullRoute.length,
-            "pontos"
-        );
+        // Converter longitude/latitude
+        // para latitude/longitude
+
+        routeCoordinates =
+            rota.geometry.coordinates.map(
+                function (coordinate) {
+
+                    return [
+
+                        coordinate[1],
+                        coordinate[0]
+
+                    ];
+
+                }
+            );
+
+
+        // Distância da rota
+
+        const distanciaKm =
+            rota.distance / 1000;
+
+
+        distance.textContent =
+            `${distanciaKm.toFixed(0)} km`;
+
     }
 
 
-    // =====================================================
-    // MAPA
-    // =====================================================
+    // =========================================
+    // CRIAR MAPA
+    // =========================================
 
-    function iniciarMapa() {
+    function criarMapa() {
 
-        if (map) return;
-
-
-        map = L.map(
-            'map',
-            {
-                zoomControl: false
-            }
-        );
+        map =
+            L.map(
+                "map",
+                {
+                    zoomControl: true
+                }
+            );
 
 
-        // =================================================
-        // OPENSTREETMAP
-        // =================================================
+        // =====================================
+        // MAPA OPENSTREETMAP
+        // =====================================
 
         L.tileLayer(
-            'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
+            "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",
             {
                 maxZoom: 19,
+
                 attribution:
-                    '&copy; OpenStreetMap contributors'
+                    "&copy; OpenStreetMap contributors"
             }
         ).addTo(map);
 
 
-        // =================================================
+        // =====================================
         // DESENHAR ROTA
-        // =================================================
+        // =====================================
 
-        polyline =
+        routeLine =
             L.polyline(
-                fullRoute,
+                routeCoordinates,
                 {
-                    color: '#2563eb',
+
+                    color: "#2563eb",
+
                     weight: 5,
-                    dashArray: '10,10',
-                    opacity: 0.8
+
+                    opacity: 0.9
+
                 }
-            ).addTo(map);
+            )
+            .addTo(map);
 
 
-        // =================================================
-        // ENQUADRAR A ROTA
-        // =================================================
+        // Mostrar toda a rota
 
-        if (fullRoute.length > 0) {
+        map.fitBounds(
+            routeLine.getBounds(),
+            {
+                padding: [
+                    70,
+                    70
+                ]
+            }
+        );
 
-            map.fitBounds(
-                polyline.getBounds(),
+
+        // =====================================
+        // MARCADOR DE ORIGEM
+        // =====================================
+
+        L.circleMarker(
+            ORIGEM,
+            {
+
+                radius: 8,
+
+                color: "#ffffff",
+
+                weight: 3,
+
+                fillColor: "#22c55e",
+
+                fillOpacity: 1
+
+            }
+        )
+        .addTo(map)
+        .bindPopup(
+            "<strong>Saída</strong><br>" +
+            "Primavera do Leste - MT"
+        );
+
+
+        // =====================================
+        // MARCADOR DE DESTINO
+        // =====================================
+
+        L.circleMarker(
+            DESTINO,
+            {
+
+                radius: 8,
+
+                color: "#ffffff",
+
+                weight: 3,
+
+                fillColor: "#ef4444",
+
+                fillOpacity: 1
+
+            }
+        )
+        .addTo(map)
+        .bindPopup(
+            "<strong>Destino</strong><br>" +
+            "Cocalinho - MT"
+        );
+
+
+        // =====================================
+        // ÍCONE DO CAMINHÃO
+        // =====================================
+
+        const truckIcon =
+            L.divIcon(
                 {
-                    padding: [60, 60]
+
+                    className:
+                        "truck-marker",
+
+                    html:
+                        "<div>🚛</div>",
+
+                    iconSize:
+                        [40, 40],
+
+                    iconAnchor:
+                        [20, 25]
+
                 }
             );
-        }
 
 
-        // =================================================
-        // ÍCONE DO CAMINHÃO
-        // =================================================
+        // =====================================
+        // CRIAR CAMINHÃO
+        // =====================================
 
-        const truckStatusIcon =
-            L.divIcon({
-
-                className:
-                    'custom-marker',
-
-                html:
-                    `<div style="
-                        font-size:32px;
-                        line-height:32px;
-                    ">🚛</div>`,
-
-                iconSize:
-                    [40, 40],
-
-                iconAnchor:
-                    [20, 35]
-            });
-
-
-        // =================================================
-        // POSIÇÃO INICIAL
-        // =================================================
-
-        retainedMarker =
+        truckMarker =
             L.marker(
                 ORIGEM,
                 {
+
                     icon:
-                        truckStatusIcon,
+                        truckIcon,
 
                     zIndexOffset:
                         1000
+
                 }
-            ).addTo(map);
+            )
+            .addTo(map);
 
-
-        // =================================================
-        // STATUS
-        // =================================================
-
-        atualizarStatus();
-
-
-        // =================================================
-        // INICIAR ANIMAÇÃO
-        // =================================================
-
-        animarCaminhao();
     }
 
 
-    // =====================================================
+    // =========================================
     // ANIMAÇÃO DO CAMINHÃO
-    // =====================================================
+    // =========================================
 
-    function animarCaminhao() {
+    function animarCaminhao(
+        agora
+    ) {
 
-        let inicio =
-            localStorage.getItem(
-                STORAGE_START_KEY
+        // Tempo passado
+
+        const tempoDecorrido =
+            agora -
+            startTime;
+
+
+        // =====================================
+        // PROGRESSO
+        // =====================================
+
+        const progresso =
+            Math.min(
+                tempoDecorrido /
+                DURACAO_SIMULACAO,
+                1
             );
 
 
-        // Se ainda não existe início,
-        // cria agora.
+        // =====================================
+        // PEGAR POSIÇÃO NA ROTA
+        // =====================================
 
-        if (!inicio) {
-
-            inicio =
-                Date.now();
-
-            localStorage.setItem(
-                STORAGE_START_KEY,
-                inicio
-            );
-
-        } else {
-
-            inicio =
-                parseInt(inicio);
-        }
-
-
-        function mover() {
-
-            const agora =
-                Date.now();
-
-
-            const progresso =
-                Math.min(
-                    (agora - inicio) /
-                    DURACAO_VIAGEM,
-                    1
-                );
-
-
-            if (
-                !fullRoute ||
-                fullRoute.length === 0
-            ) {
-
-                requestAnimationFrame(mover);
-
-                return;
-            }
-
-
-            // Índice correspondente ao progresso
-
-            const index =
-                Math.floor(
-                    progresso *
-                    (fullRoute.length - 1)
-                );
-
-
-            const posicao =
-                fullRoute[index];
-
-
-            // Mover caminhão
-
-            if (
-                retainedMarker &&
-                posicao
-            ) {
-
-                retainedMarker.setLatLng(
-                    posicao
-                );
-            }
-
-
-            // Atualizar progresso
-            atualizarProgresso(
+        const posicao =
+            calcularPosicao(
                 progresso
             );
 
 
-            // Continuar até chegar
+        // Mover caminhão
 
-            if (progresso < 1) {
+        if (
+            truckMarker &&
+            posicao
+        ) {
 
-                requestAnimationFrame(
-                    mover
-                );
-
-            } else {
-
-                atualizarChegada();
-            }
-        }
-
-
-        mover();
-    }
-
-
-    // =====================================================
-    // STATUS
-    // =====================================================
-
-    function atualizarStatus() {
-
-        const badge =
-            document.getElementById(
-                'time-badge'
+            truckMarker.setLatLng(
+                posicao
             );
 
-
-        if (badge) {
-
-            badge.innerText =
-                "EM TRÂNSITO";
-
-            badge.style.background =
-                "#22c55e";
-
-            badge.style.color =
-                "white";
         }
+
+
+        // Atualizar painel
+
+        atualizarInterface(
+            progresso,
+            tempoDecorrido
+        );
+
+
+        // =====================================
+        // CONTINUAR ANIMAÇÃO
+        // =====================================
+
+        if (progresso < 1) {
+
+            animationFrame =
+                requestAnimationFrame(
+                    animarCaminhao
+                );
+
+        } else {
+
+            finalizarEntrega();
+
+        }
+
     }
 
 
-    // =====================================================
-    // PROGRESSO
-    // =====================================================
+    // =========================================
+    // CALCULAR POSIÇÃO
+    // =========================================
 
-    function atualizarProgresso(
+    function calcularPosicao(
         progresso
     ) {
 
+        if (
+            routeCoordinates.length === 0
+        ) {
+
+            return null;
+
+        }
+
+
+        const totalPontos =
+            routeCoordinates.length - 1;
+
+
+        const posicaoAtual =
+            progresso *
+            totalPontos;
+
+
+        const indice =
+            Math.floor(
+                posicaoAtual
+            );
+
+
+        const fracao =
+            posicaoAtual -
+            indice;
+
+
+        // Se chegou no último ponto
+
+        if (
+            indice >= totalPontos
+        ) {
+
+            return
+                routeCoordinates[
+                    totalPontos
+                ];
+
+        }
+
+
+        const pontoA =
+            routeCoordinates[
+                indice
+            ];
+
+
+        const pontoB =
+            routeCoordinates[
+                indice + 1
+            ];
+
+
+        // Interpolação para deixar
+        // o movimento suave
+
+        const latitude =
+            pontoA[0] +
+            (
+                pontoB[0] -
+                pontoA[0]
+            ) *
+            fracao;
+
+
+        const longitude =
+            pontoA[1] +
+            (
+                pontoB[1] -
+                pontoA[1]
+            ) *
+            fracao;
+
+
+        return [
+            latitude,
+            longitude
+        ];
+
+    }
+
+
+    // =========================================
+    // ATUALIZAR INTERFACE
+    // =========================================
+
+    function atualizarInterface(
+        progresso,
+        tempoDecorrido
+    ) {
+
         const percentual =
-            Math.round(
+            Math.floor(
                 progresso * 100
             );
 
 
-        const progressElement =
-            document.getElementById(
-                'progress'
+        // Barra
+
+        progressBar.style.width =
+            `${percentual}%`;
+
+
+        // Texto
+
+        progressText.textContent =
+            `${percentual}%`;
+
+
+        // Tempo
+
+        elapsed.textContent =
+            formatarTempo(
+                tempoDecorrido
             );
 
 
-        if (progressElement) {
+        // Status
 
-            progressElement.style.width =
-                `${percentual}%`;
-        }
+        lastUpdate.textContent =
+            "Atualizando agora";
 
-
-        const percentElement =
-            document.getElementById(
-                'progress-percent'
-            );
-
-
-        if (percentElement) {
-
-            percentElement.innerText =
-                `${percentual}%`;
-        }
     }
 
 
-    // =====================================================
-    // CHEGADA
-    // =====================================================
+    // =========================================
+    // FORMATAR TEMPO
+    // =========================================
 
-    function atualizarChegada() {
+    function formatarTempo(
+        milissegundos
+    ) {
 
-        const badge =
-            document.getElementById(
-                'time-badge'
+        const segundosTotais =
+            Math.floor(
+                milissegundos /
+                1000
             );
 
 
-        if (badge) {
+        const horas =
+            Math.floor(
+                segundosTotais /
+                3600
+            );
 
-            badge.innerText =
-                "ENTREGUE";
 
-            badge.style.background =
-                "#2563eb";
+        const minutos =
+            Math.floor(
+                (
+                    segundosTotais %
+                    3600
+                ) /
+                60
+            );
 
-            badge.style.color =
-                "white";
-        }
+
+        const segundos =
+            segundosTotais %
+            60;
+
+
+        const hh =
+            String(horas)
+                .padStart(2, "0");
+
+
+        const mm =
+            String(minutos)
+                .padStart(2, "0");
+
+
+        const ss =
+            String(segundos)
+                .padStart(2, "0");
+
+
+        return `${hh}:${mm}:${ss}`;
+
     }
+
+
+    // =========================================
+    // FINALIZAR ENTREGA
+    // =========================================
+
+    function finalizarEntrega() {
+
+        // Caminhão chega ao destino
+
+        if (truckMarker) {
+
+            truckMarker.setLatLng(
+                DESTINO
+            );
+
+        }
+
+
+        // Status
+
+        statusBadge.textContent =
+            "ENTREGUE";
+
+
+        statusBadge.style.background =
+            "#dbeafe";
+
+
+        statusBadge.style.color =
+            "#1d4ed8";
+
+
+        // Progresso
+
+        progressBar.style.width =
+            "100%";
+
+
+        progressText.textContent =
+            "100%";
+
+
+        // Atualização
+
+        lastUpdate.textContent =
+            "Entrega concluída";
+
+    }
+
+
+    // =========================================
+    // NOVO RASTREIO
+    // =========================================
+
+    newTracking.addEventListener(
+        "click",
+        function () {
+
+            // Parar animação
+
+            if (animationFrame) {
+
+                cancelAnimationFrame(
+                    animationFrame
+                );
+
+            }
+
+
+            // Remover mapa
+
+            if (map) {
+
+                map.remove();
+
+                map = null;
+
+            }
+
+
+            // Limpar dados
+
+            routeCoordinates = [];
+
+            routeLine = null;
+
+            truckMarker = null;
+
+            startTime = null;
+
+
+            // Voltar para login
+
+            trackingScreen.classList.add(
+                "hidden"
+            );
+
+
+            loginScreen.classList.remove(
+                "hidden"
+            );
+
+
+            // Resetar formulário
+
+            trackingCode.value = "";
+
+
+            trackingButton.disabled =
+                false;
+
+
+            trackingButton.textContent =
+                "Rastrear carga";
+
+
+            errorMessage.textContent =
+                "";
+
+
+            // Resetar interface
+
+            progressBar.style.width =
+                "0%";
+
+
+            progressText.textContent =
+                "0%";
+
+
+            elapsed.textContent =
+                "00:00:00";
+
+
+            statusBadge.textContent =
+                "EM TRÂNSITO";
+
+
+            statusBadge.style.background =
+                "#dcfce7";
+
+
+            statusBadge.style.color =
+                "#15803d";
+
+
+            trackingCode.focus();
+
+        }
+    );
 
 });
