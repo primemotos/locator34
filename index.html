@@ -1,124 +1,304 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>Rastreamento em Tempo Real</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="icon" type="image/png" href="logo.png">
+    <title>Prime Transportes | Rastreamento</title>
 
-    <!-- Leaflet -->
     <link
         rel="stylesheet"
         href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     >
 
-    <!-- Seu CSS -->
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- ================= LOGIN ================= -->
+    <!-- =========================
+         TELA DE LOGIN
+    ========================== -->
 
-    <div id="login-overlay" class="login-overlay">
+    <section id="login-screen">
 
-        <div class="login-box">
+        <div class="login-card">
 
-            <img
-                src="logo.png"
-                alt="Wiu Logo"
-                class="logo"
-            >
+            <div class="logo">
+                <span>PT</span>
+            </div>
 
-            <h2>Wiu Rastreamento Seguro</h2>
+            <h1>PRIME TRANSPORTES</h1>
 
-            <p>
-                Insira o código de rastreio para visualizar a carga.
+            <p class="subtitle">
+                Rastreamento de cargas em tempo real
             </p>
 
-            <input
-                type="text"
-                id="access-code"
-                placeholder="Código de Acesso"
-                maxlength="8"
-            >
+            <div class="divider"></div>
 
-            <button id="btn-login">
-                Rastrear Carga
-            </button>
-
-            <p
-                id="error-msg"
-                style="
-                    color: red;
-                    display: none;
-                    margin-top: 10px;
-                "
-            >
-                Código inválido.
+            <p class="instruction">
+                Digite seu código de rastreio para acompanhar sua entrega.
             </p>
+
+            <form id="tracking-form">
+
+                <label for="tracking-code">
+                    CÓDIGO DE RASTREIO
+                </label>
+
+                <input
+                    type="text"
+                    id="tracking-code"
+                    placeholder="Digite seu código"
+                    autocomplete="off"
+                >
+
+                <button type="submit" id="track-button">
+                    RASTREAR CARGA
+                </button>
+
+            </form>
+
+            <p id="error-message"></p>
+
+            <div class="demo-code">
+                Código de demonstração:
+                <strong>PRIME2026</strong>
+            </div>
 
         </div>
 
-    </div>
+    </section>
 
 
-    <!-- ================= MAPA ================= -->
+    <!-- =========================
+         TELA DO RASTREAMENTO
+    ========================== -->
 
-    <div id="map"></div>
-
-
-    <!-- ================= INFORMAÇÕES ================= -->
-
-    <div
-        class="delivery-info"
-        id="info-card"
-        style="display: none;"
+    <section
+        id="tracking-screen"
+        class="hidden"
     >
 
-        <div class="driver-avatar">
-            🚛
-        </div>
-
-        <div class="info-text">
-
-            <h3>
-                Transporte Rodoviário
-            </h3>
-
-            <span
-                class="status-badge"
-                id="time-badge"
-            >
-                EM TRÂNSITO
-            </span>
-
-            <h5 id="route-status">
-                EM ROTA
-            </h5>
-
-            <p id="origem">
-                PRIMAVERA DO LESTE - MT
-            </p>
-
-            <p id="destino">
-                COCALINHO - MT
-            </p>
-
-        </div>
-
-    </div>
+        <!-- MAPA -->
+        <div id="map"></div>
 
 
-    <!-- ================= LEAFLET ================= -->
+        <!-- TOPO -->
+
+        <header class="top-bar">
+
+            <div class="brand">
+
+                <div class="brand-logo">
+                    PT
+                </div>
+
+                <div>
+                    <strong>
+                        PRIME TRANSPORTES
+                    </strong>
+
+                    <span>
+                        Rastreamento em tempo real
+                    </span>
+                </div>
+
+            </div>
+
+
+            <button id="new-tracking">
+                NOVO RASTREIO
+            </button>
+
+        </header>
+
+
+        <!-- PAINEL -->
+
+        <aside class="tracking-card">
+
+            <div class="tracking-header">
+
+                <div>
+
+                    <span class="small-title">
+                        CÓDIGO DE RASTREIO
+                    </span>
+
+                    <h2 id="display-code">
+                        PRIME2026
+                    </h2>
+
+                </div>
+
+
+                <span
+                    class="status"
+                    id="status"
+                >
+                    EM TRÂNSITO
+                </span>
+
+            </div>
+
+
+            <!-- VEÍCULO -->
+
+            <div class="vehicle-status">
+
+                <div class="truck-box">
+                    🚛
+                </div>
+
+                <div>
+
+                    <strong>
+                        Caminhão em deslocamento
+                    </strong>
+
+                    <span id="update-text">
+                        Atualizando localização...
+                    </span>
+
+                </div>
+
+            </div>
+
+
+            <!-- ROTA -->
+
+            <div class="route-info">
+
+                <div class="location">
+
+                    <div class="location-icon origin"></div>
+
+                    <div>
+
+                        <span>ORIGEM</span>
+
+                        <strong>
+                            Primavera do Leste - MT
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <div class="vertical-line"></div>
+
+
+                <div class="location">
+
+                    <div class="location-icon destination"></div>
+
+                    <div>
+
+                        <span>DESTINO</span>
+
+                        <strong>
+                            Cocalinho - MT
+                        </strong>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+
+            <!-- PROGRESSO -->
+
+            <div class="progress-section">
+
+                <div class="progress-header">
+
+                    <span>
+                        Progresso da viagem
+                    </span>
+
+                    <strong id="progress-text">
+                        0%
+                    </strong>
+
+                </div>
+
+
+                <div class="progress-background">
+
+                    <div
+                        id="progress-bar"
+                        class="progress-bar"
+                    ></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- ESTATÍSTICAS -->
+
+            <div class="statistics">
+
+                <div class="stat-box">
+
+                    <span>
+                        DISTÂNCIA
+                    </span>
+
+                    <strong id="distance">
+                        Carregando...
+                    </strong>
+
+                </div>
+
+
+                <div class="stat-box">
+
+                    <span>
+                        TEMPO DECORRIDO
+                    </span>
+
+                    <strong id="elapsed-time">
+                        00:00:00
+                    </strong>
+
+                </div>
+
+            </div>
+
+
+            <!-- PREVISÃO -->
+
+            <div class="arrival-info">
+
+                <span>
+                    DURAÇÃO DA SIMULAÇÃO
+                </span>
+
+                <strong>
+                    8 HORAS
+                </strong>
+
+            </div>
+
+        </aside>
+
+    </section>
+
+
+    <!-- LEAFLET -->
 
     <script
-        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
-    </script>
+        src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    ></script>
 
-    <!-- Seu JavaScript -->
     <script src="script.js"></script>
 
 </body>
